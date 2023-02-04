@@ -38,7 +38,7 @@ class TTNet_Video_Loader:
 
     def get_first_images_sequence(self):
         # Load (self.num_frames_sequence - 1) images
-        while (self.count < self.num_frames_sequence):
+        while self.count < self.num_frames_sequence:
             self.count += 1
             ret, frame = self.cap.read()  # BGR
             assert ret, 'Failed to load frame {:d}'.format(self.count)
