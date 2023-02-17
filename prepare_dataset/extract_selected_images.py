@@ -18,7 +18,9 @@ def get_frame_indexes(events_annos_path):
     for main_f_idx in main_frames:
         main_f_idx = int(main_f_idx)
         # take 9 or 25 videos frames with the event right in the middle frame
-        for idx in range(main_f_idx - num_frames_from_event, main_f_idx + num_frames_from_event + 1):
+        for idx in range(
+                main_f_idx - num_frames_from_event,
+                main_f_idx + num_frames_from_event + 1):
             selected_indexes.append(idx)
     selected_indexes = set(selected_indexes)
     return selected_indexes
@@ -37,17 +39,26 @@ def extract_images_from_videos(video_path, events_annos_path, out_images_dir):
     n_frames = video_cap.get(cv2.CAP_PROP_FRAME_COUNT)
     f_width = video_cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     f_height = video_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    print('video_fn: {}.mp4, f_width: {}, f_height: {}'.format(video_fn, f_width, f_height))
-    print('number of frames in the video: {}, number of selected frames: {}'.format(n_frames, len(selected_indexes)))
+    print(
+        'video_fn: {}.mp4, f_width: {}, f_height: {}'.format(
+            video_fn,
+            f_width,
+            f_height))
+    print(
+        'number of frames in the video: {}, number of selected frames: {}'.format(
+            n_frames,
+            len(selected_indexes)))
     frame_cnt = -1
     while True:
         ret, img = video_cap.read()
         if ret:
             frame_cnt += 1
             if frame_cnt in selected_indexes:
-                image_path = os.path.join(sub_images_dir, 'img_{:06d}.jpg'.format(frame_cnt))
+                image_path = os.path.join(
+                    sub_images_dir, 'img_{:06d}.jpg'.format(frame_cnt))
                 if os.path.isfile(image_path):
-                    print('video {} had been already extracted'.format(video_path))
+                    print(
+                        'video {} had been already extracted'.format(video_path))
                     break
                 cv2.imwrite(image_path, img)
         else:
@@ -72,5 +83,7 @@ if __name__ == '__main__':
 
         for video_idx, video_path in enumerate(video_paths):
             video_fn = os.path.basename(video_path)[:-4]
-            events_annos_path = os.path.join(annos_dir, video_fn, 'events_markup.json')
-            extract_images_from_videos(video_path, events_annos_path, out_images_dir)
+            events_annos_path = os.path.join(
+                annos_dir, video_fn, 'events_markup.json')
+            extract_images_from_videos(
+                video_path, events_annos_path, out_images_dir)

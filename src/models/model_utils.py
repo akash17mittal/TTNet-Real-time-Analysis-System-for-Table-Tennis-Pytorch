@@ -9,6 +9,9 @@
 # Description: utils functions that use for model
 """
 
+from models.multi_task_learning_model import Multi_Task_Learning_Model
+from models.unbalanced_loss_model import Unbalance_Loss_Model
+from models.TTNet import TTNet
 import sys
 import os
 
@@ -16,30 +19,38 @@ import torch
 
 sys.path.append('../')
 
-from models.TTNet import TTNet
-from models.unbalanced_loss_model import Unbalance_Loss_Model
-from models.multi_task_learning_model import Multi_Task_Learning_Model
-
 
 def create_model(configs):
     """Create model based on architecture name"""
     if configs.arch == 'ttnet':
-        ttnet_model = TTNet(dropout_p=configs.dropout_p, tasks=configs.tasks, input_size=configs.input_size,
-                            thresh_ball_pos_mask=configs.thresh_ball_pos_mask,
-                            num_frames_sequence=configs.num_frames_sequence)
+        ttnet_model = TTNet(
+            dropout_p=configs.dropout_p,
+            tasks=configs.tasks,
+            input_size=configs.input_size,
+            thresh_ball_pos_mask=configs.thresh_ball_pos_mask,
+            num_frames_sequence=configs.num_frames_sequence)
     else:
         assert False, 'Undefined model backbone'
 
-    if configs.multitask_learning == True:
-        model = Multi_Task_Learning_Model(ttnet_model, tasks=configs.tasks, num_events=configs.num_events,
-                                          weights_events=configs.events_weights_loss,
-                                          input_size=configs.input_size, sigma=configs.sigma,
-                                          thresh_ball_pos_mask=configs.thresh_ball_pos_mask, device=configs.device)
+    if configs.multitask_learning:
+        model = Multi_Task_Learning_Model(
+            ttnet_model,
+            tasks=configs.tasks,
+            num_events=configs.num_events,
+            weights_events=configs.events_weights_loss,
+            input_size=configs.input_size,
+            sigma=configs.sigma,
+            thresh_ball_pos_mask=configs.thresh_ball_pos_mask,
+            device=configs.device)
     else:
-        model = Unbalance_Loss_Model(ttnet_model, tasks_loss_weight=configs.tasks_loss_weight,
-                                     weights_events=configs.events_weights_loss, input_size=configs.input_size,
-                                     sigma=configs.sigma, thresh_ball_pos_mask=configs.thresh_ball_pos_mask,
-                                     device=configs.device)
+        model = Unbalance_Loss_Model(
+            ttnet_model,
+            tasks_loss_weight=configs.tasks_loss_weight,
+            weights_events=configs.events_weights_loss,
+            input_size=configs.input_size,
+            sigma=configs.sigma,
+            thresh_ball_pos_mask=configs.thresh_ball_pos_mask,
+            device=configs.device)
 
     return model
 
@@ -47,9 +58,11 @@ def create_model(configs):
 def get_num_parameters(model):
     """Count number of trained parameters of the model"""
     if hasattr(model, 'module'):
-        num_parameters = sum(p.numel() for p in model.module.parameters() if p.requires_grad)
+        num_parameters = sum(p.numel()
+                             for p in model.module.parameters() if p.requires_grad)
     else:
-        num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        num_parameters = sum(p.numel()
+                             for p in model.parameters() if p.requires_grad)
 
     return num_parameters
 
@@ -79,9 +92,14 @@ def load_weights_local_stage(pretrained_dict):
     return {**pretrained_dict, **local_weights_dict}
 
 
-def load_pretrained_model(model, pretrained_path, gpu_idx, overwrite_global_2_local):
+def load_pretrained_model(
+        model,
+        pretrained_path,
+        gpu_idx,
+        overwrite_global_2_local):
     """Load weights from the pretrained model"""
-    assert os.path.isfile(pretrained_path), "=> no checkpoint found at '{}'".format(pretrained_path)
+    assert os.path.isfile(
+        pretrained_path), "=> no checkpoint found at '{}'".format(pretrained_path)
     if gpu_idx is None:
         checkpoint = torch.load(pretrained_path, map_location='cpu')
     else:
@@ -92,7 +110,9 @@ def load_pretrained_model(model, pretrained_path, gpu_idx, overwrite_global_2_lo
     if hasattr(model, 'module'):
         model_state_dict = model.module.state_dict()
         # 1. filter out unnecessary keys
-        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_state_dict}
+        pretrained_dict = {
+            k: v for k,
+            v in pretrained_dict.items() if k in model_state_dict}
         # Load global to local stage
         if overwrite_global_2_local:
             pretrained_dict = load_weights_local_stage(pretrained_dict)
@@ -103,7 +123,9 @@ def load_pretrained_model(model, pretrained_path, gpu_idx, overwrite_global_2_lo
     else:
         model_state_dict = model.state_dict()
         # 1. filter out unnecessary keys
-        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_state_dict}
+        pretrained_dict = {
+            k: v for k,
+            v in pretrained_dict.items() if k in model_state_dict}
         # Load global to local stage
         if overwrite_global_2_local:
             pretrained_dict = load_weights_local_stage(pretrained_dict)
@@ -116,7 +138,8 @@ def load_pretrained_model(model, pretrained_path, gpu_idx, overwrite_global_2_lo
 
 def resume_model(resume_path, arch, gpu_idx):
     """Resume training model from the previous trained checkpoint"""
-    assert os.path.isfile(resume_path), "=> no checkpoint found at '{}'".format(resume_path)
+    assert os.path.isfile(
+        resume_path), "=> no checkpoint found at '{}'".format(resume_path)
     if gpu_idx is None:
         checkpoint = torch.load(resume_path, map_location='cpu')
     else:
@@ -124,7 +147,10 @@ def resume_model(resume_path, arch, gpu_idx):
         loc = 'cuda:{}'.format(gpu_idx)
         checkpoint = torch.load(resume_path, map_location=loc)
     assert arch == checkpoint['configs'].arch, "Load the different arch..."
-    print("=> loaded checkpoint '{}' (epoch {})".format(resume_path, checkpoint['epoch']))
+    print(
+        "=> loaded checkpoint '{}' (epoch {})".format(
+            resume_path,
+            checkpoint['epoch']))
 
     return checkpoint
 
@@ -140,10 +166,15 @@ def make_data_parallel(model, configs):
             # When using a single GPU per process and per
             # DistributedDataParallel, we need to divide the batch size
             # ourselves based on the total number of GPUs we have
-            configs.batch_size = int(configs.batch_size / configs.ngpus_per_node)
-            configs.num_workers = int((configs.num_workers + configs.ngpus_per_node - 1) / configs.ngpus_per_node)
-            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[configs.gpu_idx],
-                                                              find_unused_parameters=True)
+            configs.batch_size = int(
+                configs.batch_size / configs.ngpus_per_node)
+            configs.num_workers = int(
+                (configs.num_workers +
+                 configs.ngpus_per_node -
+                 1) /
+                configs.ngpus_per_node)
+            model = torch.nn.parallel.DistributedDataParallel(
+                model, device_ids=[configs.gpu_idx], find_unused_parameters=True)
         else:
             model.cuda()
             # DistributedDataParallel will divide and allocate batch_size to all
@@ -153,7 +184,8 @@ def make_data_parallel(model, configs):
         torch.cuda.set_device(configs.gpu_idx)
         model = model.cuda(configs.gpu_idx)
     else:
-        # DataParallel will divide and allocate batch_size to all available GPUs
+        # DataParallel will divide and allocate batch_size to all available
+        # GPUs
         model = torch.nn.DataParallel(model).cuda()
 
     return model

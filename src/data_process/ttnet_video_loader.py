@@ -19,7 +19,13 @@ import numpy as np
 class TTNet_Video_Loader:
     """The loader for demo with a video input"""
 
-    def __init__(self, video_path, input_size=(320, 128), num_frames_sequence=9):
+    def __init__(
+            self,
+            video_path,
+            input_size=(
+                320,
+                128),
+            num_frames_sequence=9):
         assert os.path.isfile(video_path), "No video at {}".format(video_path)
         self.cap = cv2.VideoCapture(video_path)
         self.video_fps = int(round(self.cap.get(cv2.CAP_PROP_FPS)))
@@ -42,7 +48,13 @@ class TTNet_Video_Loader:
             self.count += 1
             ret, frame = self.cap.read()  # BGR
             assert ret, 'Failed to load frame {:d}'.format(self.count)
-            self.images_sequence.append(cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (self.width, self.height)))
+            self.images_sequence.append(
+                cv2.resize(
+                    cv2.cvtColor(
+                        frame,
+                        cv2.COLOR_BGR2RGB),
+                    (self.width,
+                     self.height)))
 
     def __iter__(self):
         self.count = -1
@@ -56,7 +68,13 @@ class TTNet_Video_Loader:
 
         ret, frame = self.cap.read()  # BGR
         assert ret, 'Failed to load frame {:d}'.format(self.count)
-        self.images_sequence.append(cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (self.width, self.height)))
+        self.images_sequence.append(
+            cv2.resize(
+                cv2.cvtColor(
+                    frame,
+                    cv2.COLOR_BGR2RGB),
+                (self.width,
+                 self.height)))
         resized_imgs = np.dstack(self.images_sequence)  # (128, 320, 27)
         # Transpose (H, W, C) to (C, H, W) --> fit input of TTNet model
         resized_imgs = resized_imgs.transpose(2, 0, 1)  # (27, 128, 320)
@@ -75,10 +93,17 @@ if __name__ == '__main__':
 
     configs = parse_configs()
 
-    video_path = os.path.join(configs.dataset_dir, 'test', 'videos', 'test_1.mp4')
-    video_loader = TTNet_Video_Loader(video_path, input_size=(320, 128),
-                                      num_frames_sequence=configs.num_frames_sequence)
-    out_images_dir = os.path.join(configs.results_dir, 'debug', 'ttnet_video_loader')
+    video_path = os.path.join(
+        configs.dataset_dir,
+        'test',
+        'videos',
+        'test_1.mp4')
+    video_loader = TTNet_Video_Loader(video_path, input_size=(
+        320, 128), num_frames_sequence=configs.num_frames_sequence)
+    out_images_dir = os.path.join(
+        configs.results_dir,
+        'debug',
+        'ttnet_video_loader')
     if not os.path.isdir(out_images_dir):
         os.makedirs(out_images_dir)
 
@@ -89,18 +114,25 @@ if __name__ == '__main__':
         print('process the sequence index: {}'.format(example_index))
         start_time = time.time()
         count, resized_imgs = video_loader.__next__()
-        print('time to load sequence {}: {}'.format(example_index, time.time() - start_time))
+        print('time to load sequence {}: {}'.format(
+            example_index, time.time() - start_time))
 
         resized_imgs = resized_imgs.transpose(1, 2, 0)
         for i in range(configs.num_frames_sequence):
             img = resized_imgs[:, :, (i * 3): (i + 1) * 3]
             axes[i].imshow(img)
             axes[i].set_title('image {}'.format(i))
-        plt.savefig(os.path.join(out_images_dir, 'augment_all_imgs_{}.jpg'.format(example_index)))
+        plt.savefig(
+            os.path.join(
+                out_images_dir,
+                'augment_all_imgs_{}.jpg'.format(example_index)))
 
         origin_imgs = cv2.resize(resized_imgs, (1920, 1080))
         for i in range(configs.num_frames_sequence):
             img = origin_imgs[:, :, (i * 3): (i + 1) * 3]
             axes[i].imshow(img)
             axes[i].set_title('image {}'.format(i))
-        plt.savefig(os.path.join(out_images_dir, 'org_all_imgs_{}.jpg'.format(example_index)))
+        plt.savefig(
+            os.path.join(
+                out_images_dir,
+                'org_all_imgs_{}.jpg'.format(example_index)))

@@ -16,8 +16,10 @@ class Ball_Detection_Loss(nn.Module):
         x_target = target_ball_position[:, :self.w]
         y_target = target_ball_position[:, self.w:]
 
-        loss_ball_x = - torch.mean(x_target * torch.log(x_pred + self.epsilon) + (1 - x_target) * torch.log(1 - x_pred + self.epsilon))
-        loss_ball_y = - torch.mean(y_target * torch.log(y_pred + self.epsilon) + (1 - y_target) * torch.log(1 - y_pred + self.epsilon))
+        loss_ball_x = - torch.mean(x_target * torch.log(x_pred + self.epsilon) + (
+            1 - x_target) * torch.log(1 - x_pred + self.epsilon))
+        loss_ball_y = - torch.mean(y_target * torch.log(y_pred + self.epsilon) + (
+            1 - y_target) * torch.log(1 - y_pred + self.epsilon))
 
         return loss_ball_x + loss_ball_y
 
@@ -32,7 +34,8 @@ class Events_Spotting_Loss(nn.Module):
 
     def forward(self, pred_events, target_events):
         self.weights = self.weights.cuda()
-        return - torch.mean(self.weights * (target_events * torch.log(pred_events + self.epsilon) + (1. - target_events) * torch.log(1 - pred_events + self.epsilon)))
+        return - torch.mean(self.weights * (target_events * torch.log(pred_events + \
+                            self.epsilon) + (1. - target_events) * torch.log(1 - pred_events + self.epsilon)))
 
 
 class DICE_Smotth_Loss(nn.Module):
@@ -41,7 +44,8 @@ class DICE_Smotth_Loss(nn.Module):
         self.epsilon = epsilon
 
     def forward(self, pred_seg, target_seg):
-        return 1. - ((torch.sum(2 * pred_seg * target_seg) + self.epsilon) / (torch.sum(pred_seg) + torch.sum(target_seg) + self.epsilon))
+        return 1. - ((torch.sum(2 * pred_seg * target_seg) + self.epsilon) /
+                     (torch.sum(pred_seg) + torch.sum(target_seg) + self.epsilon))
 
 
 class BCE_Loss(nn.Module):
@@ -50,7 +54,8 @@ class BCE_Loss(nn.Module):
         self.epsilon = epsilon
 
     def forward(self, pred_seg, target_seg):
-        return - torch.mean(target_seg * torch.log(pred_seg + self.epsilon) + (1 - target_seg) * torch.log(1 - pred_seg + self.epsilon))
+        return - torch.mean(target_seg * torch.log(pred_seg + self.epsilon) +
+                            (1 - target_seg) * torch.log(1 - pred_seg + self.epsilon))
 
 
 class Segmentation_Loss(nn.Module):
@@ -64,5 +69,6 @@ class Segmentation_Loss(nn.Module):
         target_seg = target_seg.float()
         loss_bce = self.bce_criterion(pred_seg, target_seg)
         loss_dice = self.dice_criterion(pred_seg, target_seg)
-        loss_seg = (1 - self.bce_weight) * loss_dice + self.bce_weight * loss_bce
+        loss_seg = (1 - self.bce_weight) * loss_dice + \
+            self.bce_weight * loss_bce
         return loss_seg
